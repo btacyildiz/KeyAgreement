@@ -1,0 +1,36 @@
+Terminal 1 
+docker-compose -f docker-compose-simple.yaml up
+Terminal 2 
+docker exec -it chaincode bash
+cd keyagreement
+go build
+CORE_PEER_ADDRESS=peer:7052 CORE_CHAINCODE_ID_NAME=mycc:0 ./keyagreement
+Terminal 3 
+docker exec -it cli bash
+peer chaincode install -p chaincodedev/chaincode/keyagreement -n mycc -v 0
+
+peer chaincode instantiate -n mycc -v 0 -c '{"Args":["11","5","3","3"]}' -C myc
+
+// set z values
+peer chaincode invoke -n mycc -c '{"Args":["setZ", "1", "3"]}' -C myc
+peer chaincode invoke -n mycc -c '{"Args":["setZ", "2", "9"]}' -C myc
+peer chaincode invoke -n mycc -c '{"Args":["setZ", "3", "5"]}' -C myc
+
+peer chaincode query -n mycc -c '{"Args":["getZ", ""]}' -C myc
+
+// set x values 
+peer chaincode invoke -n mycc -c '{"Args":["setX", "1", "9", "5"]}' -C myc
+peer chaincode invoke -n mycc -c '{"Args":["setX", "2", "3", "9"]}' -C myc
+peer chaincode invoke -n mycc -c '{"Args":["setX", "3", "5", "3"]}' -C myc
+
+peer chaincode query -n mycc -c '{"Args":["getX", ""]}' -C myc
+
+peer chaincode query -n mycc -c '{"Args":["getAll",""]}' -C myc
+
+
+peer chaincode invoke -n mycc -c '{"Args":["set", "participantCount", "4"]}' -C myc
+peer chaincode query -n mycc -c '{"Args":["query","a"]}' -C myc
+peer chaincode query -n mycc -c '{"Args":["getAll",""]}' -C myc
+
+
+'{"Z1":"2","Z2":"4","Z3":"2"}'
