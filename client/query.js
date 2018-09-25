@@ -53,7 +53,7 @@ Fabric_Client.newDefaultKeyValueStore({ path: store_path
 	// queryAllCars chaincode function - requires no arguments , ex: args: [''],
 	const request = {
 		//targets : --- letting this default to the peers assigned to the channel
-		chaincodeId: 'mycc',
+		chaincodeId: 'keyagreement',
 		fcn: 'getAll',
 		args: ['']
 	};

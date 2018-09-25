@@ -1,4 +1,6 @@
 Terminal 1 
+go to directory hyperledger/fabric-samples/chaincode-docker-devmode
+../first-network/byfn.sh down
 docker-compose -f docker-compose-simple.yaml up
 Terminal 2 
 docker exec -it chaincode bash
