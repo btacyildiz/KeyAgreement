@@ -30,25 +30,40 @@ func getHashWithTimeStamp(input string) uint32 {
 	return crc32.ChecksumIEEE(message)
 }
 
+func FloatToString(input_num float64) string {
+	// to convert a float number to a string
+	return strconv.FormatFloat(input_num, 'f', 6, 64)
+}
+
 func calcTempPubParams(k float64, v float64, x float64) (float64, float64, float64) {
 	var w = math.Mod(math.Pow(g, k), p)
 
 	var A = math.Mod(math.Pow(g, v), p)
-	// TODO did not use timestamp and hash insecure against replay attack
 	fmt.Println("W: ", w, " A: ", A, " X: ", x, " V: ", v, " Q: ", q, " ::: ", math.Mod(-4, 5))
-	var partialOfB = (int(getHashWithTimeStamp(strconv.FormatFloat(w))-A*x) / int(v))
+	var up = float64(getHashWithTimeStamp(FloatToString(w))) - A*x
+	var partialOfB = (int(up) / int(v))
 	fmt.Println("Partial of B: ", partialOfB)
 	var B = math.Mod(float64(partialOfB), q)
 	return w, A, B
 }
 
-func verifyPubVariables() {
+func verifyPubVariables(w, A, B, y float64) bool {
+	// check W
+	if 2 > w || w > p {
+		return false
+	}
 
+	// check
+	if math.Pow(g, float64(getHashWithTimeStamp(FloatToString(w)))) != (math.Pow(y, A) * math.Pow(y, B)) {
+		return false
+	}
+
+	return true
 }
 
 func main() {
 	// STEP 1 CALCULATE
-	a, b, c := calcTempPubParams(k1, v1, x1)
+	w, A, B := calcTempPubParams(k1, v1, x1)
 
-	fmt.Println("Res: ", a, b, c)
+	fmt.Println("Res: ", w, A, B)
 }
