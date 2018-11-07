@@ -52,9 +52,18 @@ func verifyPubVariables(w, A, B, y float64) bool {
 	if 2 > w || w > p {
 		return false
 	}
+	fmt.Println("First check is succeeded")
 
-	// check
-	if math.Pow(g, float64(getHashWithTimeStamp(FloatToString(w)))) != (math.Pow(y, A) * math.Pow(y, B)) {
+	if math.Mod(math.Pow(w, q), p) != 1 {
+		return false
+	}
+
+	fmt.Println("Second check is succeeded")
+
+	firstPart := math.Pow(g, float64(getHashWithTimeStamp(FloatToString(w))))
+	secondPart := math.Mod((math.Pow(y, A) * math.Pow(A, B)), p)
+	fmt.Println("First: ", firstPart, " Second: ", secondPart)
+	if firstPart != secondPart {
 		return false
 	}
 
@@ -65,5 +74,7 @@ func main() {
 	// STEP 1 CALCULATE
 	w, A, B := calcTempPubParams(k1, v1, x1)
 
-	fmt.Println("Res: ", w, A, B)
+	verifyRes := verifyPubVariables(w, A, B, y1)
+
+	fmt.Println("Res: ", w, A, B, " Verify Res: ", verifyRes)
 }
