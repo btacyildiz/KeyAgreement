@@ -54,9 +54,9 @@ type participant struct {
 	g int
 }
 
-var participants [2]participant
+var participants [3]participant
 
-const participantCount = 2
+const participantCount = 3
 
 func printParticipant(node participant) {
 	fmt.Println("x:", node.x, " k:", node.k, " v:", node.v,
@@ -73,6 +73,18 @@ func initParticipant() participant {
 	return participant{k: k, v: v, x: x, y: y, r: r}
 }
 
+func findNeigbour(index, max int) (int, int) {
+	var before int
+	var after int
+	if index-1 < 0 {
+		before = max - 1
+	} else {
+		before = index - 1
+	}
+	after = (index + 1) % max
+	return before, after
+}
+
 func rnd(max int) int {
 	s1 := rand.NewSource(time.Now().UnixNano())
 	r1 := rand.New(s1)
@@ -83,11 +95,6 @@ func getHashWithTimeStamp(input string) uint32 {
 	concat := strconv.FormatInt(time.Now().Unix(), 10) + input
 	message := []byte(concat)
 	return crc32.ChecksumIEEE(message)
-}
-
-func FloatToString(input_num float64) string {
-	// to convert a float number to a string
-	return strconv.FormatFloat(input_num, 'f', 6, 64)
 }
 
 func calcTempPubParams(node participant) participant {
@@ -103,8 +110,7 @@ func calcTempPubParams(node participant) participant {
 }
 
 func calcTempSecretKeys(node participant, index int) participant {
-	before := (index - 1) % participantCount
-	after := (index + 1) % participantCount
+	before, after := findNeigbour(index, participantCount)
 	div := (float64)(participants[after].w / participants[before].w)
 	powK := math.Pow(div, (float64)(node.k))
 	node.z = (int)(math.Mod(powK, p))
@@ -124,8 +130,7 @@ func verifyTempSecretKeys(node participant, index int) bool {
 		return false
 	}
 
-	before := (index - 1) % participantCount
-	after := (index + 1) % participantCount
+	before, after := findNeigbour(index, participantCount)
 
 	div := (float64)(participants[after].w / participants[before].w)
 	v1 = math.Pow(div, (float64)(node.g))
@@ -162,22 +167,29 @@ func verifyPubVariables(w, A, B, y float64) bool {
 
 func main() {
 	node1 := initParticipant()
-	printParticipant(node1)
+	node2 := initParticipant()
+	node3 := initParticipant()
+
+	participants[0] = node1
+	participants[1] = node2
+	participants[2] = node3
+
 	// printout public variables
 	fmt.Println("Public Variables")
 	fmt.Println("q:", q, " p:", p, " g:", g)
-	/*
-		// STEP 1 CALCULATE
-		w, A, B := calcTempPubParams(k1, v1, x1)
-		verifyRes := verifyPubVariables(w, A, B, y1)
-	*/
-	// STEP 2
 	fmt.Println("X2: ", x2, " Y2: ", y2)
 
-	node1 = calcTempPubParams(node1)
+	for i := 0; i < len(participants); i++ {
+		participants[i] = calcTempPubParams(participants[i])
+	}
 
 	verifyRes1 := verifyPubVariables(float64(node1.w), float64(node1.A),
 		float64(node1.B), float64(node1.y))
+
+	for i := 0; i < len(participants); i++ {
+		participants[i] = calcTempSecretKeys(participants[i], i)
+		printParticipant(participants[i])
+	}
 
 	fmt.Println("Node1 verify res: ", verifyRes1)
 	printParticipant(node1)
