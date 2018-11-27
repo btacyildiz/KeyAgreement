@@ -2,11 +2,7 @@ package main
 
 import (
 	"fmt"
-	"hash/crc32"
 	"math/big"
-	"math/rand"
-	"strconv"
-	"time"
 )
 
 // participants perform key agreement protocol
@@ -20,9 +16,9 @@ y = g^x mod p
 k,v = (Zq) (are randomly selected)
 r = (Zq) (randomly selected)
 **/
-var q, e = new(big.Int).SetString("70830437809992052122705382232092710520096640888343042864124381269620926369090824665254595835832924535603173757631672116331232968683454751265258387352641382374279467305216459307052164504547904309385274902216434059305334668453580540584548701719844965116691799027770171599194704612669102357388906362282730675783", 10)
-var p, e1 = new(big.Int).SetString("141660875619984104245410764464185421040193281776686085728248762539241852738181649330509191671665849071206347515263344232662465937366909502530516774705282764748558934610432918614104329009095808618770549804432868118610669336907161081169097403439689930233383598055540343198389409225338204714777812724565461351567", 10)
-var g, e2 = getGenerator(p)
+var q, _ = new(big.Int).SetString("70830437809992052122705382232092710520096640888343042864124381269620926369090824665254595835832924535603173757631672116331232968683454751265258387352641382374279467305216459307052164504547904309385274902216434059305334668453580540584548701719844965116691799027770171599194704612669102357388906362282730675783", 10)
+var p, _ = new(big.Int).SetString("141660875619984104245410764464185421040193281776686085728248762539241852738181649330509191671665849071206347515263344232662465937366909502530516774705282764748558934610432918614104329009095808618770549804432868118610669336907161081169097403439689930233383598055540343198389409225338204714777812724565461351567", 10)
+var g, _ = getGenerator(p)
 
 type participant struct {
 	// inited values
@@ -78,18 +74,6 @@ func findNeigbour(index, max int) (int, int) {
 	return before, after
 }
 
-func rnd(max int) int {
-	s1 := rand.NewSource(time.Now().UnixNano())
-	r1 := rand.New(s1)
-	return (r1.Int()%(max-1) + 1)
-}
-
-func getHashWithTimeStamp(input string) uint32 {
-	concat := strconv.FormatInt(time.Now().Unix(), 10) + input
-	message := []byte(concat)
-	return crc32.ChecksumIEEE(message)
-}
-
 func calcTempPubParams(node participant) participant {
 	node.omega = new(big.Int).Exp(g, node.v, p)
 	node.A = new(big.Int).Exp(g, node.v, p)
@@ -115,10 +99,12 @@ func calcTempSecretKeys(node participant, index int) participant {
 }
 
 func calculateKey(node participant, index int) *big.Int {
-	resulting_key := node.kI
+	resulting_key := new(big.Int).Mod(node.ckI, p)
 	for i := 0; i < len(participants); i++ {
 		if i != index {
-			resulting_key = resulting_key.Exp(resulting_key, participants[i].kI, p)
+			fmt.Println("Calculating key in of ", i)
+			mulled := new(big.Int).Mul(resulting_key, participants[i].ckI)
+			resulting_key = mulled.Mod(mulled, p)
 		}
 	}
 	return resulting_key
@@ -161,6 +147,8 @@ func main() {
 	for i := 0; i < len(participants); i++ {
 		participants[i] = calcTempSecretKeys(participants[i], i)
 		//printParticipant(participants[i])
+		fmt.Println(i, " ckI  ", participants[i].ckI)
+
 	}
 
 	for i := 0; i < len(participants); i++ {
