@@ -11,7 +11,7 @@ func getGenerator(p *big.Int) (*big.Int, error) {
 	rnd, err := generateRandom(p)
 	if err == nil {
 		rnd.Mul(rnd, rnd)
-		fmt.Println("Mull ", rnd)
+		//fmt.Println("Mull ", rnd)
 		final := rnd.Mod(rnd, p)
 		return final, nil
 	}
@@ -32,7 +32,7 @@ func generateRandom(p *big.Int) (*big.Int, error) {
 	return nil, err
 }
 
-func main() {
+func mainas() {
 	var p = new(big.Int).SetInt64(123123)
 	a, b := generateRandom(p)
 	if b == nil {

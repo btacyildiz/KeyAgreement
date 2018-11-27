@@ -8,7 +8,7 @@
             "type": "go",
             "request": "launch",
             "name": "Launch Program",
-            "program": "${workspaceFolder}/GKAP/Schnorr.go"
+            "program": "${workspaceFolder}/GKAP/*.go"
         }
     ]
 }
