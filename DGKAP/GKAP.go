@@ -148,7 +148,6 @@ func main() {
 		participants[i] = calcTempSecretKeys(participants[i], i)
 		//printParticipant(participants[i])
 		fmt.Println(i, " ckI  ", participants[i].ckI)
-
 	}
 
 	for i := 0; i < len(participants); i++ {
