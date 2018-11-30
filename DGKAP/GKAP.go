@@ -124,33 +124,44 @@ func verifyPubVariables(w, A, B, y float64) bool {
 }
 
 func main() {
-	node1 := initParticipant()
-	node2 := initParticipant()
-	node3 := initParticipant()
 
-	participants[0] = node1
-	participants[1] = node2
-	participants[2] = node3
+	/*
+		node1 := initParticipant()
+		node2 := initParticipant()
+		node3 := initParticipant()
 
-	// printout public variables
-	fmt.Println("Public Variables")
-	fmt.Println("q:", q, " p:", p, " g:", g)
+		participants[0] = node1
+		participants[1] = node2
+		participants[2] = node3
 
-	for i := 0; i < len(participants); i++ {
-		fmt.Println("test", i)
-		participants[i] = calcTempPubParams(participants[i])
-	}
+		// printout public variables
+		fmt.Println("Public Variables")
+		fmt.Println("q:", q, " p:", p, " g:", g)
 
-	//verifyRes1 := verifyPubVariables(float64(node1.w), float64(node1.A),
-	//	float64(node1.B), float64(node1.y))
+		for i := 0; i < len(participants); i++ {
+			fmt.Println("test", i)
+			participants[i] = calcTempPubParams(participants[i])
+		}
 
-	for i := 0; i < len(participants); i++ {
-		participants[i] = calcTempSecretKeys(participants[i], i)
-		//printParticipant(participants[i])
-		fmt.Println(i, " ckI  ", participants[i].ckI)
-	}
+		//verifyRes1 := verifyPubVariables(float64(node1.w), float64(node1.A),
+		//	float64(node1.B), float64(node1.y))
 
-	for i := 0; i < len(participants); i++ {
-		fmt.Println("Node ", i, " Key: ", calculateKey(participants[i], i))
-	}
+		for i := 0; i < len(participants); i++ {
+			participants[i] = calcTempSecretKeys(participants[i], i)
+			//printParticipant(participants[i])
+			fmt.Println(i, " ckI  ", participants[i].ckI)
+		}
+
+		for i := 0; i < len(participants); i++ {
+			fmt.Println("Node ", i, " Key: ", calculateKey(participants[i], i))
+		}
+	*/
+	//sigYFalse, _ := new(big.Int).SetString("1231123", 10)
+	sig := newPkSigSchnorr(p, q)
+	sigX, sigY, sigG := sig.keyGen()
+	sigOmega, _ := new(big.Int).SetString("123123", 10)
+
+	sigE, sigS := sig.sign(sigY, sigG, sigX, sigOmega)
+	res := sig.verify(sigY, sigG, sigS, sigE, sigOmega)
+	fmt.Println("Res: ", res)
 }

@@ -20,7 +20,7 @@ type PkSigSchnorr struct {
 	y *big.Int
 }
 
-func New(p *big.Int, q *big.Int) PkSigSchnorr {
+func newPkSigSchnorr(p *big.Int, q *big.Int) PkSigSchnorr {
 	sig := PkSigSchnorr{p: p, q: q, r: new(big.Int).SetInt64(2)}
 	return sig
 }
@@ -66,8 +66,4 @@ func (sig PkSigSchnorr) hash(M *big.Int, r *big.Int) *big.Int {
 	PPlusQ := new(big.Int).Add(sig.p, sig.q)
 	sum := new(big.Int).Add(M, r)
 	return sum.Add(sum, PPlusQ)
-}
-
-func main() {
-	PkSigSchnorr
 }
