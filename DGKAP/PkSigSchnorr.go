@@ -12,12 +12,23 @@ package in charm crypto
 https://jhuisi.github.io/charm/_modules/pksig_schnorr91.html#SchnorrSig
 */
 type PkSigSchnorr struct {
-	p *big.Int
-	q *big.Int
-	r *big.Int
-	g *big.Int
-	x *big.Int
+	p          *big.Int
+	q          *big.Int
+	r          *big.Int
+	privateKey PkSigSchnorrPrivate
+	publicKey  PkSigSchorrPublic
+}
+
+type PkSigSchnorrPrivate *big.Int
+
+type PkSigSchorrPublic struct {
 	y *big.Int
+	g *big.Int
+}
+
+type PkSigSchorrSign struct {
+	s *big.Int
+	e *big.Int
 }
 
 func newPkSigSchnorr(p *big.Int, q *big.Int) PkSigSchnorr {
@@ -25,38 +36,36 @@ func newPkSigSchnorr(p *big.Int, q *big.Int) PkSigSchnorr {
 	return sig
 }
 
-func (sig PkSigSchnorr) keyGen() (*big.Int, *big.Int, *big.Int) {
-	// WARNING mod operation is performed check it out!
-	sig.x, _ = generateRandom(sig.p)
-	sig.g = new(big.Int).Mod(sig.randomGem(), sig.p)
-	sig.y = new(big.Int).Exp(sig.g, sig.x, sig.p)
-	return sig.x, sig.y, sig.g
+func (sig PkSigSchnorr) keyGen() (PkSigSchnorrPrivate, PkSigSchorrPublic) {
+	sig.privateKey, _ = generateRandom(sig.p)
+	sig.publicKey.g = new(big.Int).Mod(sig.randomGem(), sig.p)
+	sig.publicKey.y = new(big.Int).Exp(sig.publicKey.g, sig.privateKey, sig.p)
+	return sig.privateKey, sig.publicKey
 }
 
 func (sig PkSigSchnorr) randomGem() *big.Int {
 	h, _ := generateRandom(sig.p)
-	sig.g = new(big.Int).Exp(h, sig.r, sig.p)
-	return sig.g
+	return new(big.Int).Exp(h, sig.r, sig.p)
 }
 
-func (sig PkSigSchnorr) sign(y *big.Int, g *big.Int, x *big.Int, M *big.Int) (*big.Int, *big.Int) {
+func (sig PkSigSchnorr) sign(public PkSigSchorrPublic, private PkSigSchnorrPrivate, M *big.Int) PkSigSchorrSign {
 	k, _ := generateRandom(sig.q)
 	r := new(big.Int).Exp(g, k, sig.p)
 	e := sig.hash(M, r)
-	diff := k.Sub(k, new(big.Int).Mul(x, e))
+	diff := k.Sub(k, new(big.Int).Mul(private, e))
 	s := diff.Mod(diff, sig.q)
-	return e, s
+	return PkSigSchorrSign{e: e, s: s}
 }
 
-func (sig PkSigSchnorr) verify(y *big.Int, g *big.Int, s *big.Int, e *big.Int, M *big.Int) bool {
-	first := new(big.Int).Exp(g, s, sig.p)
-	second := new(big.Int).Exp(y, e, p)
+func (sig PkSigSchnorr) verify(public PkSigSchorrPublic, signature PkSigSchorrSign, M *big.Int) bool {
+	first := new(big.Int).Exp(g, signature.s, sig.p)
+	second := new(big.Int).Exp(public.y, signature.e, sig.p)
 	mul := first.Mul(first, second)
-	r := mul.Mod(mul, p)
+	r := mul.Mod(mul, sig.p)
 	eCreated := sig.hash(M, r)
-	if e.Cmp(eCreated) != 0 {
+	if signature.e.Cmp(eCreated) != 0 {
 		fmt.Println("Created Sig: ", eCreated)
-		fmt.Println("Given Sig: ", e)
+		fmt.Println("Given Sig: ", signature.e)
 		return false
 	}
 	return true
