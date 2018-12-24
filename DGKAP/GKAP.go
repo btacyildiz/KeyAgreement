@@ -79,6 +79,8 @@ func findNeigbour(index, max int) (int, int) {
 func calcTempPubParams(node participant) participant {
 	node.omega = new(big.Int).Exp(g, node.v, p)
 	node.A = new(big.Int).Exp(g, node.v, p)
+	node.sig = newPkSigSchnorr(p, q)
+	node.privateKey, node.publicKey = node.sig.keyGen()
 	node.B = node.sig.sign(node.publicKey, node.privateKey, node.omega)
 	fmt.Println("omega: ", node.omega, " A: ", node.A)
 	return node
@@ -99,15 +101,15 @@ func calcTempSecretKeys(node participant, index int) participant {
 }
 
 func calculateKey(node participant, index int) *big.Int {
-	resulting_key := new(big.Int).Mod(node.ckI, p)
+	resultingKey := new(big.Int).Mod(node.ckI, p)
 	for i := 0; i < len(participants); i++ {
 		if i != index {
 			fmt.Println("Calculating key in of ", i)
-			mulled := new(big.Int).Mul(resulting_key, participants[i].ckI)
-			resulting_key = mulled.Mod(mulled, p)
+			mulled := new(big.Int).Mul(resultingKey, participants[i].ckI)
+			resultingKey = mulled.Mod(mulled, p)
 		}
 	}
-	return resulting_key
+	return resultingKey
 }
 
 func verifyTempSecretKeys(nodeWi, index int) bool {
@@ -140,9 +142,10 @@ func main() {
 		participants[i] = calcTempPubParams(participants[i])
 	}
 
-	for i := 0; i < len(participants); i++ {
-		for j := 0; j < len(participants); i++ {
+	for i := 0; i < participantCount; i++ {
+		for j := 0; j < participantCount; j++ {
 			if i != j {
+				fmt.Println("")
 				verifyRes := verifyPubVariables(participants[i], participants[j].publicKey, participants[j].B, participants[j].omega)
 				fmt.Println("Node ", i, " verifies Node ", j, " Res: ", verifyRes)
 				participants[i] = calcTempPubParams(participants[i])

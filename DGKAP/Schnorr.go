@@ -9,7 +9,7 @@ import (
 	"github.com/dedis/kyber/util/key"
 )
 
-func mainad() {
+func maina() {
 	suite := edwards25519.NewBlakeSHA256Ed25519()
 	rand := suite.XOF([]byte("example"))
 	fmt.Println("Rand: ", rand.Read)
