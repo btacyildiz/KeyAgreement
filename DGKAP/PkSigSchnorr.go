@@ -65,7 +65,7 @@ func (sig PkSigSchnorr) verify(public PkSigSchorrPublic, signature PkSigSchorrSi
 	eCreated := sig.hash(M, r)
 	if signature.e.Cmp(eCreated) != 0 {
 		fmt.Println("Created Sig: ", eCreated)
-		fmt.Println("Given Sig: ", signature.e)
+		fmt.Println("Given Sig:   ", signature.e)
 		return false
 	}
 	return true
