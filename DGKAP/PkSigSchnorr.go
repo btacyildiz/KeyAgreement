@@ -17,18 +17,11 @@ type PkSigSchnorr struct {
 	r *big.Int
 }
 
-//type PkSigSchnorrPrivate *big.Int
-
-/*type PkSigSchorrPublic struct {
-	y *big.Int
-	g *big.Int
-}*/
-/*
 type PkSigSchorrSign struct {
 	s *big.Int
 	e *big.Int
 }
-*/
+
 func newPkSigSchnorr(p *big.Int, q *big.Int) PkSigSchnorr {
 	sig := PkSigSchnorr{p: p, q: q, r: new(big.Int).SetInt64(2)}
 	sig.print()
@@ -36,6 +29,7 @@ func newPkSigSchnorr(p *big.Int, q *big.Int) PkSigSchnorr {
 }
 
 func (sig PkSigSchnorr) print() {
+
 	fmt.Println("p: ", sig.p)
 	fmt.Println("q: ", sig.q)
 	fmt.Println("r: ", sig.r)
@@ -55,26 +49,24 @@ func (sig PkSigSchnorr) randomGem() *big.Int {
 	return new(big.Int).Exp(h, sig.r, sig.p)
 }
 
-func (sig PkSigSchnorr) sign(private *big.Int, g *big.Int, M *big.Int) (*big.Int, *big.Int) {
+func (sig PkSigSchnorr) sign(private *big.Int, g *big.Int, M *big.Int) *PkSigSchorrSign {
 	k, _ := generateRandom(sig.q)
-	fmt.Println("Sig g: Hello")
-	fmt.Println("Sig g: ", g)
 	r := new(big.Int).Exp(g, k, sig.p)
 	e := sig.hash(M, r)
 	diff := k.Sub(k, new(big.Int).Mul(private, e))
 	s := diff.Mod(diff, sig.q)
-	return e, s
+	return &PkSigSchorrSign{e: e, s: s}
 }
 
-func (sig PkSigSchnorr) verify(public *big.Int, g *big.Int, s *big.Int, e *big.Int, M *big.Int) bool {
-	first := new(big.Int).Exp(g, s, sig.p)
-	second := new(big.Int).Exp(public, e, sig.p)
+func (sig PkSigSchnorr) verify(public *big.Int, g *big.Int, sign *PkSigSchorrSign, M *big.Int) bool {
+	first := new(big.Int).Exp(g, sign.s, sig.p)
+	second := new(big.Int).Exp(public, sign.e, sig.p)
 	mul := first.Mul(first, second)
 	r := mul.Mod(mul, sig.p)
 	eCreated := sig.hash(M, r)
-	if e.Cmp(eCreated) != 0 {
+	if sign.e.Cmp(eCreated) != 0 {
 		fmt.Println("Created Sig: ", eCreated)
-		fmt.Println("Given Sig:   ", e)
+		fmt.Println("Given Sig:   ", sign.e)
 		return false
 	}
 	return true
@@ -84,4 +76,14 @@ func (sig PkSigSchnorr) hash(M *big.Int, r *big.Int) *big.Int {
 	PPlusQ := new(big.Int).Add(sig.p, sig.q)
 	sum := new(big.Int).Add(M, r)
 	return sum.Add(sum, PPlusQ)
+}
+
+func test() {
+	sig := newPkSigSchnorr(p, q)
+	privateKey, publicKey, g := sig.keyGen()
+	sigOmega, _ := new(big.Int).SetString("123213123213", 10)
+
+	signature := sig.sign(privateKey, g, sigOmega)
+	res := sig.verify(publicKey, g, signature, sigOmega)
+	fmt.Println("Res: ", res)
 }

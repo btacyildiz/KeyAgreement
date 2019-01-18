@@ -24,6 +24,7 @@ type participant struct {
 	// inited values
 	privateKey *big.Int
 	publicKey  *big.Int
+	g          *big.Int
 	t          *big.Int
 	v          *big.Int
 	tInv       *big.Int
@@ -31,7 +32,7 @@ type participant struct {
 	// First section values
 	omega *big.Int
 	A     *big.Int
-	B     *big.Int
+	B     *PkSigSchorrSign
 	// Second section values
 	a   *big.Int
 	ckI *big.Int
@@ -53,16 +54,15 @@ func printParticipant(node participant) {
 		" v:", node.v, " tInv:", node.tInv, " vInv:", node.vInv)
 }
 
-/*
 func initParticipant() participant {
 	// initial variables
 	sig := newPkSigSchnorr(p, q)
-	privateKey, publicKey := sig.keyGen()
+	privateKey, publicKey, g := sig.keyGen()
 	t, _ := generateRandom(q)
 	v, _ := generateRandom(q)
 	tInv := new(big.Int).ModInverse(t, q)
 	vInv := new(big.Int).ModInverse(v, q)
-	return participant{privateKey: privateKey, publicKey: publicKey, t: t, v: v, tInv: tInv, vInv: vInv}
+	return participant{privateKey: privateKey, publicKey: publicKey, g: g, t: t, v: v, tInv: tInv, vInv: vInv}
 }
 
 func findNeigbour(index, max int) (int, int) {
@@ -77,13 +77,12 @@ func findNeigbour(index, max int) (int, int) {
 	return before, after
 }
 
-
 func calcTempPubParams(node participant) participant {
 	node.omega = new(big.Int).Exp(g, node.v, p)
 	node.A = new(big.Int).Exp(g, node.v, p)
 	node.sig = newPkSigSchnorr(p, q)
-	node.privateKey, node.publicKey = node.sig.keyGen()
-	node.B = node.sig.sign(node.publicKey, node.privateKey, node.omega)
+	node.privateKey, node.publicKey, node.g = node.sig.keyGen()
+	node.B = node.sig.sign(node.privateKey, node.g, node.omega)
 	fmt.Println("omega: ", node.omega)
 	fmt.Println("public: ", node.publicKey)
 	fmt.Println("private: ", node.privateKey)
@@ -97,7 +96,7 @@ func calcTempSecretKeys(node participant, index int) participant {
 	node.a, _ = generateRandom(q)
 	node.ckI = new(big.Int).Exp(participants[after].omega, node.v, p)
 
-		//Signing will be implemented
+	//Signing will be implemented
 
 	node.cI = new(big.Int).Exp(g, node.a, p)
 	exp := new(big.Int).Exp(node.ckI, node.a, p)
@@ -121,65 +120,55 @@ func verifyTempSecretKeys(nodeWi, index int) bool {
 	return false
 }
 
-func verifyPubVariables(nodeWillVerify participant, nodePublic PkSigSchorrPublic, sign PkSigSchorrSign, M *big.Int) bool {
-	return nodeWillVerify.sig.verify(nodePublic, sign, M)
+func verifyPubVariables(nodeWillVerify participant, nodePublic *big.Int, nodeG *big.Int, sign *PkSigSchorrSign, M *big.Int) bool {
+	return nodeWillVerify.sig.verify(nodePublic, nodeG, sign, M)
 }
-*/
+
 func main() {
-	/*
-		node1 := initParticipant()
-		node2 := initParticipant()
-		node3 := initParticipant()
 
-		participants[0] = node1
-		participants[1] = node2
-		participants[2] = node3
+	node1 := initParticipant()
+	node2 := initParticipant()
+	node3 := initParticipant()
 
-		// printout public variables
-		//fmt.Println("Public Variables")
-		//fmt.Println("q:", q, " p:", p, " g:", g)
+	participants[0] = node1
+	participants[1] = node2
+	participants[2] = node3
 
-		for i := 0; i < len(participants); i++ {
-			fmt.Println("Node: ", i)
-			participants[i] = calcTempPubParams(participants[i])
-		}
+	// printout public variables
+	//fmt.Println("Public Variables")
+	//fmt.Println("q:", q, " p:", p, " g:", g)
 
-		for i := 0; i < participantCount; i++ {
-			for j := 0; j < participantCount; j++ {
-				if i != j {
-					fmt.Println("Node ", j, " verifying")
-					fmt.Println("Public: ", participants[j].publicKey)
-					fmt.Println("Signature: ", participants[j].B)
-					fmt.Println("Omega: ", participants[j].omega)
-					verifyRes := verifyPubVariables(participants[j], participants[j].publicKey, participants[j].B, participants[j].omega)
-					fmt.Println("Node ", j, " Verified Res: ", verifyRes)
+	for i := 0; i < len(participants); i++ {
+		fmt.Println("Node: ", i)
+		participants[i] = calcTempPubParams(participants[i])
+	}
 
-					//participants[i] = calcTempPubParams(participants[i])
-				}
+	for i := 0; i < participantCount; i++ {
+		for j := 0; j < participantCount; j++ {
+			if i != j {
+				fmt.Println("Node ", j, " verifying")
+				fmt.Println("Public: ", participants[j].publicKey)
+				fmt.Println("Signature: ", participants[j].B)
+				fmt.Println("Omega: ", participants[j].omega)
+				verifyRes := verifyPubVariables(participants[j], participants[j].publicKey, participants[j].g, participants[j].B, participants[j].omega)
+				fmt.Println("Node ", j, " Verified Res: ", verifyRes)
+
+				//participants[i] = calcTempPubParams(participants[i])
 			}
 		}
+	}
 
-		for i := 0; i < len(participants); i++ {
-			participants[i] = calcTempSecretKeys(participants[i], i)
-			//printParticipant(participants[i])
-			//fmt.Println(i, " ckI  ", participants[i].ckI)
-		}
+	for i := 0; i < len(participants); i++ {
+		participants[i] = calcTempSecretKeys(participants[i], i)
+		//printParticipant(participants[i])
+		//fmt.Println(i, " ckI  ", participants[i].ckI)
+	}
 
-		for i := 0; i < len(participants); i++ {
-			fmt.Println("Node ", i, " Key: ", calculateKey(participants[i], i))
-		}
+	for i := 0; i < len(participants); i++ {
+		fmt.Println("Node ", i, " Key: ", calculateKey(participants[i], i))
+	}
 
-
-	*/
 	//sigYFalse, _ := new(big.Int).SetString("1231123", 10)
-	sig := newPkSigSchnorr(p, q)
-	privateKey, publicKey, g := sig.keyGen()
-	sigOmega, _ := new(big.Int).SetString("123121", 10)
 
-	e, s := sig.sign(privateKey, g, sigOmega)
-	fmt.Println("Sign e: ", e)
-	fmt.Println("Sign s: ", s)
-	res := sig.verify(publicKey, g, s, e, sigOmega)
-	fmt.Println("Res: ", res)
-
+	//test()
 }
