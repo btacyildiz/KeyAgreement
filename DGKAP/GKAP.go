@@ -34,10 +34,11 @@ type participant struct {
 	A     *big.Int
 	B     *PkSigSchorrSign
 	// Second section values
-	a   *big.Int
-	ckI *big.Int
-	cI  *big.Int
-	kI  *big.Int
+	a       *big.Int
+	ckI     *big.Int
+	ckISign *PkSigSchorrSign
+	cI      *big.Int
+	kI      *big.Int
 	// Last Step = Calculated group key
 	groupKey *big.Int
 
@@ -95,9 +96,7 @@ func calcTempSecretKeys(node participant, index int) participant {
 
 	node.a, _ = generateRandom(q)
 	node.ckI = new(big.Int).Exp(participants[after].omega, node.v, p)
-
-	//Signing will be implemented
-
+	node.ckISign = node.sig.sign(node.privateKey, node.g, node.ckI)
 	node.cI = new(big.Int).Exp(g, node.a, p)
 	exp := new(big.Int).Exp(node.ckI, node.a, p)
 	node.kI = exp.Mod(exp, q)
@@ -143,17 +142,13 @@ func main() {
 		participants[i] = calcTempPubParams(participants[i])
 	}
 
+	// first stage verification
+	fmt.Println("First Stage Verification")
 	for i := 0; i < participantCount; i++ {
 		for j := 0; j < participantCount; j++ {
 			if i != j {
-				fmt.Println("Node ", j, " verifying")
-				fmt.Println("Public: ", participants[j].publicKey)
-				fmt.Println("Signature: ", participants[j].B)
-				fmt.Println("Omega: ", participants[j].omega)
-				verifyRes := verifyPubVariables(participants[j], participants[j].publicKey, participants[j].g, participants[j].B, participants[j].omega)
+				verifyRes := verifyPubVariables(participants[i], participants[j].publicKey, participants[j].g, participants[j].B, participants[j].omega)
 				fmt.Println("Node ", j, " Verified Res: ", verifyRes)
-
-				//participants[i] = calcTempPubParams(participants[i])
 			}
 		}
 	}
@@ -164,11 +159,18 @@ func main() {
 		//fmt.Println(i, " ckI  ", participants[i].ckI)
 	}
 
+	// second stage verification
+	fmt.Println("Second Stage")
+	for i := 0; i < participantCount; i++ {
+		for j := 0; j < participantCount; j++ {
+			if i != j {
+				verifyRes := verifyPubVariables(participants[i], participants[j].publicKey, participants[j].g, participants[j].ckISign, participants[j].ckI)
+				fmt.Println("Node ", j, " Verified Res: ", verifyRes)
+			}
+		}
+	}
+
 	for i := 0; i < len(participants); i++ {
 		fmt.Println("Node ", i, " Key: ", calculateKey(participants[i], i))
 	}
-
-	//sigYFalse, _ := new(big.Int).SetString("1231123", 10)
-
-	//test()
 }
