@@ -22,8 +22,8 @@ var g, _ = getGenerator(p)
 
 type participant struct {
 	// inited values
-	privateKey PkSigSchnorrPrivate
-	publicKey  PkSigSchorrPublic
+	privateKey *big.Int
+	publicKey  *big.Int
 	t          *big.Int
 	v          *big.Int
 	tInv       *big.Int
@@ -31,7 +31,7 @@ type participant struct {
 	// First section values
 	omega *big.Int
 	A     *big.Int
-	B     PkSigSchorrSign
+	B     *big.Int
 	// Second section values
 	a   *big.Int
 	ckI *big.Int
@@ -53,6 +53,7 @@ func printParticipant(node participant) {
 		" v:", node.v, " tInv:", node.tInv, " vInv:", node.vInv)
 }
 
+/*
 func initParticipant() participant {
 	// initial variables
 	sig := newPkSigSchnorr(p, q)
@@ -76,6 +77,7 @@ func findNeigbour(index, max int) (int, int) {
 	return before, after
 }
 
+
 func calcTempPubParams(node participant) participant {
 	node.omega = new(big.Int).Exp(g, node.v, p)
 	node.A = new(big.Int).Exp(g, node.v, p)
@@ -94,9 +96,9 @@ func calcTempSecretKeys(node participant, index int) participant {
 
 	node.a, _ = generateRandom(q)
 	node.ckI = new(big.Int).Exp(participants[after].omega, node.v, p)
-	/*
-		Signing will be implemented
-	*/
+
+		//Signing will be implemented
+
 	node.cI = new(big.Int).Exp(g, node.a, p)
 	exp := new(big.Int).Exp(node.ckI, node.a, p)
 	node.kI = exp.Mod(exp, q)
@@ -116,16 +118,13 @@ func calculateKey(node participant, index int) *big.Int {
 }
 
 func verifyTempSecretKeys(nodeWi, index int) bool {
-
-	/*
-	 */
 	return false
 }
 
 func verifyPubVariables(nodeWillVerify participant, nodePublic PkSigSchorrPublic, sign PkSigSchorrSign, M *big.Int) bool {
 	return nodeWillVerify.sig.verify(nodePublic, sign, M)
 }
-
+*/
 func main() {
 	/*
 		node1 := initParticipant()
@@ -174,11 +173,13 @@ func main() {
 	*/
 	//sigYFalse, _ := new(big.Int).SetString("1231123", 10)
 	sig := newPkSigSchnorr(p, q)
-	privateKey, publicKey := sig.keyGen()
+	privateKey, publicKey, g := sig.keyGen()
 	sigOmega, _ := new(big.Int).SetString("123121", 10)
 
-	sign := sig.sign(publicKey, privateKey, sigOmega)
-	res := sig.verify(publicKey, sign, sigOmega)
+	e, s := sig.sign(privateKey, g, sigOmega)
+	fmt.Println("Sign e: ", e)
+	fmt.Println("Sign s: ", s)
+	res := sig.verify(publicKey, g, s, e, sigOmega)
 	fmt.Println("Res: ", res)
 
 }
