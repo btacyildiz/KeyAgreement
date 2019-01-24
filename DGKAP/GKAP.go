@@ -148,7 +148,11 @@ func main() {
 		for j := 0; j < participantCount; j++ {
 			if i != j {
 				verifyRes := verifyPubVariables(participants[i], participants[j].publicKey, participants[j].g, participants[j].B, participants[j].omega)
-				fmt.Println("Node ", j, " Verified Res: ", verifyRes)
+				fmt.Println("Node ", i, " verifies ", j, "  Res: ", verifyRes)
+				if !verifyRes {
+					fmt.Println("Aborted!")
+					return
+				}
 			}
 		}
 	}
@@ -165,7 +169,11 @@ func main() {
 		for j := 0; j < participantCount; j++ {
 			if i != j {
 				verifyRes := verifyPubVariables(participants[i], participants[j].publicKey, participants[j].g, participants[j].ckISign, participants[j].ckI)
-				fmt.Println("Node ", j, " Verified Res: ", verifyRes)
+				fmt.Println("Node ", i, " verifies ", j, " Res: ", verifyRes)
+				if !verifyRes {
+					fmt.Println("Aborted!")
+					return
+				}
 			}
 		}
 	}
